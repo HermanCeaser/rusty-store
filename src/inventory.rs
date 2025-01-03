@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use crate::display;
+
 #[derive(Debug, Clone)]
 pub struct Product {
     pub name: String,
@@ -87,6 +89,64 @@ impl Inventory {
             products: HashMap::new(),
         }
     }
+}
+
+/// Public function to add a product to the inventory
+pub fn add_product(inventory: &mut Inventory, product: Product) {
+    match inventory.add_product(product) {
+        Ok(_) => println!("Product added successfully!"),
+        Err(err) => println!("Error adding product: {}", err),
+    }
+}
+
+/// Public function to edit a product in the inventory
+pub fn edit_product(
+    inventory: &mut Inventory,
+    product_name: &str,
+    description: Option<String>,
+    price: Option<f64>,
+    quantity: Option<u32>,
+) {
+    match inventory.edit_product(product_name, description, price, quantity) {
+        Ok(_) => println!("Product edited successfully!"),
+        Err(err) => println!("Error editing product: {}", err),
+    }
+}
+
+/// Public function to delete atablet from the inventory
+pub fn delete_product(inventory: &mut Inventory, product_name: &str) {
+    match inventory.delete_product(product_name) {
+        Ok(_) => println!("Product deleted successfully!"),
+        Err(err) => println!("Error deleting product: {}", err),
+    }
+}
+
+/// Public function to list products in the inventory
+pub fn list_products(inventory: &Inventory) {
+
+    if inventory.products.is_empty() {
+        println!("No products available in the inventory.");
+        return;       
+    }
+
+    let headers = vec!["No", "Name", "Description", "Price", "Quantity"];
+    let rows: Vec<Vec<String>> = inventory
+        .products
+        .values()
+        .enumerate()
+        .map(|(index, product)| {
+            vec![
+                (index + 1).to_string(), 
+                product.name.clone(),
+                product.description.clone(),
+                format!("{:.2}", product.price),
+                product.quantity.to_string(),
+            ]
+        })
+        .collect();
+
+    let table = display::format_table(headers, rows);
+    println!("{}", table);
 }
 
 // Tests
