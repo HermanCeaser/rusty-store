@@ -9,29 +9,41 @@ pub struct Product {
 }
 
 pub trait InventoryManagement {
-    fn add_product(&mut self, product:Product) -> Result<(), String>;
-    fn edit_product(&mut self, product_name: &str, description: Option<String>, price: Option<f64>, quantity: Option<u32>) -> Result<(), String>;
-    fn delete_product(&mut self, product_name: &str);
-    
+    fn add_product(&mut self, product: Product) -> Result<(), String>;
+    fn edit_product(
+        &mut self,
+        product_name: &str,
+        description: Option<String>,
+        price: Option<f64>,
+        quantity: Option<u32>,
+    ) -> Result<(), String>;
+    fn delete_product(&mut self, product_name: &str) -> Result<(), String>;
 }
 
 pub struct Inventory {
-    pub products: HashMap<String, Product>
+    pub products: HashMap<String, Product>,
 }
 
 impl InventoryManagement for Inventory {
-    fn add_product(&mut self, product:Product) -> Result<(), String> {
+    fn add_product(&mut self, product: Product) -> Result<(), String> {
         if product.price < 0.0 {
             return Err("Price cannot be negative!".to_string());
-        } 
+        }
 
         self.products.insert(product.name.clone(), product);
         Ok(())
     }
 
-    fn edit_product(&mut self, product_name: &str, description: Option<String>, price: Option<f64>, quantity: Option<u32>) -> Result<(), String>{
+    fn edit_product(
+        &mut self,
+        product_name: &str,
+        description: Option<String>,
+        price: Option<f64>,
+        quantity: Option<u32>,
+    ) -> Result<(), String> {
         if let Some(product) = self.products.get_mut(product_name) {
             let mut updated = false;
+
             if let Some(new_description) = description {
                 product.description = new_description;
                 updated = true;
@@ -60,13 +72,12 @@ impl InventoryManagement for Inventory {
         }
     }
 
-    fn delete_product(&mut self, product_name: &str) {
-        if self.products.contains_key(product_name) {
-            self.products.remove(product_name);
-        } else {
-            // Handle product not found error
-            println!("Error: Product not found.");
-        }
+    fn delete_product(&mut self, product_name: &str) -> Result<(), String> {
+        if self.products.remove(product_name).is_none() {
+            return Err(format!("Product '{}' not found.", product_name));
+        } 
+        Ok(())
+      
     }
 }
 
@@ -114,7 +125,7 @@ mod tests {
         assert_eq!(result.unwrap_err(), "Price cannot be negative!".to_string());
         assert!(!inventory.products.contains_key("Smartphone"));
     }
-    
+
     #[test]
     fn updates_product_with_single_field() {
         let mut inventory = Inventory::new();
@@ -144,7 +155,8 @@ mod tests {
             quantity: 20,
         });
 
-        let result =  inventory.edit_product("Test Product", 
+        let result = inventory.edit_product(
+            "Test Product",
             Some("Updated description".to_string()),
             Some(150.0),
             Some(25),
@@ -156,10 +168,7 @@ mod tests {
         assert_eq!(product.description, "Updated description");
         assert_eq!(product.price, 150.0);
         assert_eq!(product.quantity, 25);
-
     }
-
-    
 
     #[test]
     fn update_product_requires_at_least_one_field() {
@@ -194,4 +203,37 @@ mod tests {
         );
     }
 
+    #[test]
+    fn deletes_product() {
+        let mut inventory = Inventory::new();
+        let _ = inventory.add_product(Product {
+            name: "Laptop".to_string(),
+            description: "A gaming laptop".to_string(),
+            price: 1200.0,
+            quantity: 10,
+        });
+
+        let product = inventory.products.get("Laptop").unwrap();
+        // Assert that the added product exists
+        assert_eq!(product.name, "Laptop");
+        assert!(inventory.products.contains_key("Laptop"));
+
+        let result = inventory.delete_product("Laptop");
+        // Assert that deleted product nolonger exists
+        assert!(result.is_ok());
+        assert!(!inventory.products.contains_key("Laptop"));
+    }
+
+    #[test]
+    fn deletes_non_existent_product() {
+        let mut inventory = Inventory::new();
+        
+        let result = inventory.delete_product("Laptop");
+        // Assert that deletion of nonexistent product is not successfull
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            "Product 'Laptop' not found.".to_string()
+        );
+    }
 }
