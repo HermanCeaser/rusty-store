@@ -9,8 +9,8 @@ pub struct Product {
 }
 
 pub trait InventoryManagement {
-    fn add_product(&mut self, product:Product);
-    fn edit_product(&mut self, product_name: &str, description: String, price: f64, quantity: u32);
+    fn add_product(&mut self, product:Product) -> Result<(), String>;
+    fn edit_product(&mut self, product_name: &str, description: Option<String>, price: Option<f64>, quantity: Option<u32>) -> Result<(), String>;
     fn delete_product(&mut self, product_name: &str);
     
 }
@@ -20,18 +20,43 @@ pub struct Inventory {
 }
 
 impl InventoryManagement for Inventory {
-    fn add_product(&mut self, product:Product) {
+    fn add_product(&mut self, product:Product) -> Result<(), String> {
+        if product.price < 0.0 {
+            return Err("Price cannot be negative!".to_string());
+        } 
+
         self.products.insert(product.name.clone(), product);
+        Ok(())
     }
 
-    fn edit_product(&mut self, product_name: &str, description: String, price: f64, quantity: u32) {
+    fn edit_product(&mut self, product_name: &str, description: Option<String>, price: Option<f64>, quantity: Option<u32>) -> Result<(), String>{
         if let Some(product) = self.products.get_mut(product_name) {
-            product.description = description;
-            product.price = price;
-            product.quantity = quantity;
+            let mut updated = false;
+            if let Some(new_description) = description {
+                product.description = new_description;
+                updated = true;
+            }
+
+            if let Some(new_price) = price {
+                if new_price < 0.0 {
+                    return Err("Price cannot be negative!".to_string());
+                }
+                product.price = new_price;
+                updated = true;
+            }
+
+            if let Some(new_quantity) = quantity {
+                product.quantity = new_quantity;
+                updated = true;
+            }
+
+            if !updated {
+                return Err("At least one field must be provided for update.".to_string());
+            }
+
+            Ok(())
         } else {
-            //Handle Product not found later
-            println!("Error: Product not found")
+            Err(format!("Product '{}' not found.", product_name))
         }
     }
 
@@ -59,39 +84,114 @@ mod tests {
     use super::*;
 
     #[test]
-    fn adds_product() {
+    fn adds_valid_product() {
         let mut inventory = Inventory::new();
 
-        inventory.add_product(Product {
-            name: "Test Product".to_string(),
-            description: "A product for testing".to_string(),
-            price: 100.0,
+        let result = inventory.add_product(Product {
+            name: "Laptop".to_string(),
+            description: "A gaming laptop".to_string(),
+            price: 1200.0,
             quantity: 20,
         });
 
-        assert!(inventory.products.contains_key("Test Product"));
+        assert!(result.is_ok());
+        assert!(inventory.products.contains_key("Laptop"));
     }
 
     #[test]
-    fn edits_product() {
+
+    fn prevents_adding_product_with_negative_price() {
+        let mut inventory = Inventory::new();
+
+        let result = inventory.add_product(Product {
+            name: "Smartphone".to_string(),
+            description: "A high-end smartphone".to_string(),
+            price: -999.0, // Invalid Price
+            quantity: 20,
+        });
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Price cannot be negative!".to_string());
+        assert!(!inventory.products.contains_key("Smartphone"));
+    }
+    
+    #[test]
+    fn updates_product_with_single_field() {
+        let mut inventory = Inventory::new();
+
+        let _ = inventory.add_product(Product {
+            name: "Tablet".to_string(),
+            description: "A basic tablet".to_string(),
+            price: 300.0,
+            quantity: 50,
+        });
+
+        let result = inventory.edit_product("Tablet", None, Some(280.0), None);
+
+        assert!(result.is_ok());
+        let product = inventory.products.get("Tablet").unwrap();
+        assert_eq!(product.price, 280.0);
+    }
+
+    #[test]
+    fn updates_product_with_multiple_fields() {
         let mut inventory: Inventory = Inventory::new();
-        inventory.add_product(Product {
+
+        let _ = inventory.add_product(Product {
             name: "Test Product".to_string(),
             description: "A product for testing".to_string(),
             price: 100.0,
             quantity: 20,
         });
-        inventory.edit_product("Test Product", 
-            "Updated description".to_string(),
-            150.0,
-            15,
+
+        let result =  inventory.edit_product("Test Product", 
+            Some("Updated description".to_string()),
+            Some(150.0),
+            Some(25),
         );
 
         let product = inventory.products.get("Test Product").unwrap();
 
+        assert!(result.is_ok());
         assert_eq!(product.description, "Updated description");
         assert_eq!(product.price, 150.0);
-        assert_eq!(product.quantity, 15);
+        assert_eq!(product.quantity, 25);
 
     }
+
+    
+
+    #[test]
+    fn update_product_requires_at_least_one_field() {
+        let mut inventory = Inventory::new();
+
+        let _ = inventory.add_product(Product {
+            name: "Laptop".to_string(),
+            description: "A gaming laptop".to_string(),
+            price: 1200.0,
+            quantity: 10,
+        });
+
+        let result = inventory.edit_product("Laptop", None, None, None);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            "At least one field must be provided for update.".to_string()
+        );
+    }
+
+    #[test]
+    fn handles_missing_product() {
+        let mut inventory = Inventory::new();
+
+        let result = inventory.edit_product("Nonexistent", None, Some(500.0), None);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            "Product 'Nonexistent' not found.".to_string()
+        );
+    }
+
 }
