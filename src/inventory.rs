@@ -1,8 +1,10 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::{fs, io};
 
 use crate::util;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Product {
     pub name: String,
     pub description: String,
@@ -22,6 +24,7 @@ trait InventoryManagement {
     fn delete_product(&mut self, product_name: &str) -> Result<(), String>;
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Inventory {
     pub products: HashMap<String, Product>,
 }
@@ -77,9 +80,8 @@ impl InventoryManagement for Inventory {
     fn delete_product(&mut self, product_name: &str) -> Result<(), String> {
         if self.products.remove(product_name).is_none() {
             return Err(format!("Product '{}' not found.", product_name));
-        } 
+        }
         Ok(())
-      
     }
 }
 
@@ -88,6 +90,18 @@ impl Inventory {
         Self {
             products: HashMap::new(),
         }
+    }
+
+    pub fn save_to_file(&self, file_path: &str) -> io::Result<()> {
+        let json = serde_json::to_string_pretty(&self)?;
+        fs::write(file_path, json)?;
+        Ok(())
+    }
+
+    pub fn load_from_file(file_path: &str) -> io::Result<Self> {
+        let json = fs::read_to_string(file_path)?;
+        let inventory = serde_json::from_str(&json)?;
+        Ok(inventory)
     }
 }
 
@@ -125,7 +139,6 @@ pub fn add_product(inventory: &mut Inventory) {
 
 /// Public function to edit a product in the inventory
 pub fn edit_product(inventory: &mut Inventory) {
-
     let product_name = util::get_user_input("Enter the name of the product to edit: ");
 
     let description = {
@@ -184,10 +197,9 @@ pub fn delete_product(inventory: &mut Inventory) {
 
 /// Public function to list products in the inventory
 pub fn list_products(inventory: &mut Inventory) {
-
     if inventory.products.is_empty() {
         println!("No products available in the inventory.");
-        return;       
+        return;
     }
 
     let headers = vec!["No", "Name", "Description", "Price", "Quantity"];
@@ -197,7 +209,7 @@ pub fn list_products(inventory: &mut Inventory) {
         .enumerate()
         .map(|(index, product)| {
             vec![
-                (index + 1).to_string(), 
+                (index + 1).to_string(),
                 product.name.clone(),
                 product.description.clone(),
                 format!("{:.2}", product.price),
@@ -348,7 +360,7 @@ mod tests {
     #[test]
     fn deletes_non_existent_product() {
         let mut inventory = Inventory::new();
-        
+
         let result = inventory.delete_product("Laptop");
         // Assert that deletion of nonexistent product is not successfull
         assert!(result.is_err());

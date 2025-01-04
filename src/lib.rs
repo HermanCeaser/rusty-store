@@ -14,8 +14,17 @@ pub struct Store {
 impl Store {
     pub fn new() -> Self {
         Store {
-            inventory: Inventory::new(),
-            transaction_manager: TransactionManager::new(),
+            inventory: Inventory::load_from_file("db/inventory.json").unwrap_or_else(|_| Inventory::new()),
+            transaction_manager: TransactionManager::load_from_file("db/transactions.json").unwrap_or_else(|_| TransactionManager::new()),
+        }
+    }
+
+    pub fn save(&self) {
+        if let Err(e) = self.inventory.save_to_file("db/inventory.json") {
+            eprintln!("Failed to save inventory: {}", e);
+        }
+        if let Err(e) = self.transaction_manager.save_to_file("db/transactions.json") {
+            eprintln!("Failed to save transactions: {}", e);
         }
     }
 }
@@ -37,7 +46,8 @@ pub fn execute(store: &mut Store, choice: &str) {
         "7" => transaction::list_transactions(&store.transaction_manager),
         "8" => reporting::generate_reports(&store.transaction_manager, &store.inventory),
         "9" => {
-            println!("--- Exiting Rusty Store ---");
+            store.save();
+            println!("Exiting...");
             println!("Goodbye!");
             std::process::exit(0);
         }

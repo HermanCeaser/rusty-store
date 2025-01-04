@@ -1,17 +1,18 @@
-use std::fmt;
+use std::{fmt, fs, io};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     inventory::{Inventory, Product},
     util,
 };
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum TransactionType {
     Sale,
     Purchase,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Transaction {
     pub transaction_type: TransactionType,
     pub product_name: String,
@@ -37,6 +38,7 @@ impl fmt::Display for Transaction {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransactionManager {
     pub transactions: Vec<Transaction>,
 }
@@ -46,6 +48,18 @@ impl TransactionManager {
         Self {
             transactions: Vec::new(),
         }
+    }
+
+    pub fn save_to_file(&self, file_path: &str) -> io::Result<()> {
+        let json = serde_json::to_string_pretty(&self)?;
+        fs::write(file_path, json)?;
+        Ok(())
+    }
+
+    pub fn load_from_file(file_path: &str) -> io::Result<Self> {
+        let json = fs::read_to_string(file_path)?;
+        let transactions = serde_json::from_str(&json)?;
+        Ok(transactions)
     }
 
     fn record_sale(
@@ -119,16 +133,14 @@ impl TransactionManager {
     }
 
     pub fn sales(&self) -> Vec<&Transaction> {
-        self
-            .transactions
+        self.transactions
             .iter()
             .filter(|transaction| transaction.transaction_type == TransactionType::Sale)
             .collect()
     }
 
     pub fn purchases(&self) -> Vec<&Transaction> {
-        self
-            .transactions
+        self.transactions
             .iter()
             .filter(|transaction| transaction.transaction_type == TransactionType::Purchase)
             .collect()
