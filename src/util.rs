@@ -1,3 +1,5 @@
+use std::io;
+
 pub fn format_table(headers: Vec<&str>, rows: Vec<Vec<String>>) -> String {
     let mut table = String::new();
 
@@ -33,4 +35,13 @@ pub fn format_table(headers: Vec<&str>, rows: Vec<Vec<String>>) -> String {
     table
 
 
+}
+
+
+pub fn get_user_input(prompt: &str) -> String {
+    print!("{}", prompt);
+    io::Write::flush(&mut io::stdout()).unwrap(); // Ensure the prompt is printed before input
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
+    input.trim().to_string()
 }
