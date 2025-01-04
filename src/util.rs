@@ -37,6 +37,21 @@ pub fn format_table(headers: Vec<&str>, rows: Vec<Vec<String>>) -> String {
 
 }
 
+/// Formats data as a simple list
+pub fn format_list(headers: Vec<&str>, rows: Vec<Vec<String>>) -> String {
+    let mut list = String::new();
+
+    for (index, row) in rows.iter().enumerate() {
+        list.push_str(&format!("Item {}:\n", index + 1));
+        for (header, cell) in headers.iter().zip(row) {
+            list.push_str(&format!("  {}: {}\n", header, cell));
+        }
+        list.push('\n');
+    }
+
+    list
+}
+
 
 pub fn get_user_input(prompt: &str) -> String {
     print!("{}", prompt);
