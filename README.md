@@ -7,6 +7,8 @@ The Rusty Store Inventory Management System is a command-line application built 
 1. **Inventory Management**: Add, edit, delete products with attributes like name, description, price, and quantity.
 2. **Sales Management**: Record sales transactions and calculate profits.
 3. **Purchase Management**: Record purchase transactions and calculate costs.
+4. **Reporting**: Generate reports for inventory, sales, and purchase history.
+5. **Modular Architecture**: Organized into separate modules for reusability.
 
 ## Prerequisites
 
@@ -82,6 +84,7 @@ src/
 ├── lib.rs                 // Orchestrates modules and exposes APIs
 ├── main.rs                // Entry point of the application
 ├── schema.sql             // SQL schema for database initialization
+├── util.rs                // Utility functions to format output and get user input
 ├── inventory.json         // JSON file for backup storage
 
 ```
