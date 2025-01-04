@@ -9,6 +9,8 @@ The Rusty Store Inventory Management System is a command-line application built 
 3. **Purchase Management**: Record purchase transactions and calculate costs.
 4. **Reporting**: Generate reports for inventory, sales, and purchase history.
 5. **Modular Architecture**: Organized into separate modules for reusability.
+6. **Authentication**: Basic authentication system for store managers.
+7. **Persistence**: Data stored in JSON file backups.
 
 ## Prerequisites
 
@@ -26,6 +28,14 @@ The Rusty Store Inventory Management System is a command-line application built 
     ```bash
     cargo build
     ```
+
+## Configuration
+
+The application uses SQLite as the primary data storage. 
+create a file under db folder with the name `rusty_store.db` or if you save the file as a different name, update the connection string in `main.rs`:
+```rust
+let auth_manager = AuthManager::new("sqlite:db/rusty_store.db").await;
+```
 
 ## Usage
 
@@ -55,7 +65,7 @@ cargo run
     Sale recorded successfully. Total: $2401.00
     ```
 
-3. **Generate a Report**:
+8. **Generate a Report**:
     ```bash
     > Generate Report
     Inventory Report:
@@ -72,20 +82,31 @@ cargo run
     Total Sales: $2401.00
     ```
 
+### Backup and Restore
+
+1. **Backup Inventory**:
+    Inventory Data is automatically backed up to `inventory.json` when the program shuts down.
+    Transaction Data is automatically backed up to `transactions.json` when the program shuts down.
+
+2. **Restore Inventory**:
+    The system will automatically load inventory data from `inventory.json` on start.
+    The system will automatically load transactions data from `transactions.json` on start.
 
 ## Project Structure
 
 ```plaintext
 src/
-├── authentication.rs      // Handles authentication logic
+├── auth.rs                // Handles authentication logic
 ├── inventory.rs           // Manages product inventory
 ├── transactions.rs        // Handles sales and purchase transactions
 ├── reporting.rs           // Generates reports
 ├── lib.rs                 // Orchestrates modules and exposes APIs
 ├── main.rs                // Entry point of the application
-├── schema.sql             // SQL schema for database initialization
 ├── util.rs                // Utility functions to format output and get user input
-├── inventory.json         // JSON file for backup storage
+db/
+├── rusty_store.db         // Handles Storage for authenticated users (You are to create this file manually)
+├── inventory.json         // JSON file for backup storage of products in inventory
+├── transactions.json      // JSON file for backup storage of transactions made
 
 ```
 
