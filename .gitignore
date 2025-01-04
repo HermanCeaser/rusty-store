@@ -1,3 +1,4 @@
 /target
-db/inventory.json
-db/transactions.json
+/db/
+!db/.gitkeep
+
