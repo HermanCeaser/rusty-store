@@ -12,6 +12,7 @@ fn main() {
         let choice = choice.trim();
 
         if choice == "6" {
+            println!("--- Exiting Rusty Store ---");
             break;
         }
 
