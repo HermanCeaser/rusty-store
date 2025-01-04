@@ -1,17 +1,17 @@
-mod util;
 pub mod inventory;
-use inventory::{add_product, delete_product, edit_product, list_products};
-use inventory::Inventory;
+pub mod transaction;
+mod util;
 
+use inventory::Inventory;
+use inventory::{add_product, delete_product, edit_product, list_products};
 
 pub struct Store {
-    pub inventory: Inventory
+    pub inventory: Inventory,
 }
 
 pub struct StoreConfig<'a> {
-    pub actions: Vec<(&'a str, &'a str, fn(&mut Inventory))>
+    pub actions: Vec<(&'a str, &'a str, fn(&mut Inventory))>,
 }
-
 
 impl Store {
     pub fn new() -> Self {
@@ -29,7 +29,7 @@ impl<'a> StoreConfig<'a> {
                 ("2", "Edit Product", edit_product),
                 ("3", "Delete Product", delete_product),
                 ("4", "List Products", list_products),
-            ]
+            ],
         }
     }
 
@@ -49,5 +49,4 @@ impl<'a> StoreConfig<'a> {
         }
         println!("6: Exit");
     }
-
 }
