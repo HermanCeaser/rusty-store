@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::display;
+use crate::util;
 
 #[derive(Debug, Clone)]
 pub struct Product {
@@ -92,7 +92,30 @@ impl Inventory {
 }
 
 /// Public function to add a product to the inventory
-pub fn add_product(inventory: &mut Inventory, product: Product) {
+pub fn add_product(inventory: &mut Inventory) {
+
+    let name = util::get_user_input("Enter product name: ");
+    let description = util::get_user_input("Enter product description: ");
+    let price: f64 = util::get_user_input("Enter product price: ")
+        .parse()
+        .unwrap_or_else(|_| {
+            println!("Invalid price! Defaulting to 0.0.");
+            0.0
+        });
+    let quantity: u32 = util::get_user_input("Enter product quantity: ")
+        .parse()
+        .unwrap_or_else(|_| {
+            println!("Invalid quantity! Defaulting to 0.");
+            0
+        });
+
+    let product = Product {
+        name,
+        description,
+        price,
+        quantity,
+    };
+
     match inventory.add_product(product) {
         Ok(_) => println!("Product added successfully!"),
         Err(err) => println!("Error adding product: {}", err),
@@ -100,29 +123,66 @@ pub fn add_product(inventory: &mut Inventory, product: Product) {
 }
 
 /// Public function to edit a product in the inventory
-pub fn edit_product(
-    inventory: &mut Inventory,
-    product_name: &str,
-    description: Option<String>,
-    price: Option<f64>,
-    quantity: Option<u32>,
-) {
-    match inventory.edit_product(product_name, description, price, quantity) {
+pub fn edit_product(inventory: &mut Inventory) {
+
+    let product_name = util::get_user_input("Enter the name of the product to edit: ");
+
+    let description = {
+        let input = util::get_user_input("Enter new description (leave blank to skip): ");
+        if input.is_empty() {
+            None
+        } else {
+            Some(input)
+        }
+    };
+
+    let price = {
+        let input = util::get_user_input("Enter new price (leave blank to skip): ");
+        if input.is_empty() {
+            None
+        } else {
+            match input.parse::<f64>() {
+                Ok(value) => Some(value),
+                Err(_) => {
+                    println!("Invalid price! Skipping.");
+                    None
+                }
+            }
+        }
+    };
+
+    let quantity = {
+        let input = util::get_user_input("Enter new quantity (leave blank to skip): ");
+        if input.is_empty() {
+            None
+        } else {
+            match input.parse::<u32>() {
+                Ok(value) => Some(value),
+                Err(_) => {
+                    println!("Invalid quantity! Skipping.");
+                    None
+                }
+            }
+        }
+    };
+
+    match inventory.edit_product(&product_name, description, price, quantity) {
         Ok(_) => println!("Product edited successfully!"),
         Err(err) => println!("Error editing product: {}", err),
     }
 }
 
 /// Public function to delete atablet from the inventory
-pub fn delete_product(inventory: &mut Inventory, product_name: &str) {
-    match inventory.delete_product(product_name) {
+pub fn delete_product(inventory: &mut Inventory) {
+    let product_name = util::get_user_input("Enter the name of the product to delete: ");
+    match inventory.delete_product(&product_name) {
         Ok(_) => println!("Product deleted successfully!"),
         Err(err) => println!("Error deleting product: {}", err),
     }
 }
 
 /// Public function to list products in the inventory
-pub fn list_products(inventory: &Inventory) {
+pub fn list_products(inventory: &mut Inventory) {
 
     if inventory.products.is_empty() {
         println!("No products available in the inventory.");
@@ -145,7 +205,7 @@ pub fn list_products(inventory: &Inventory) {
         })
         .collect();
 
-    let table = display::format_table(headers, rows);
+    let table = util::format_table(headers, rows);
     println!("{}", table);
 }
 
