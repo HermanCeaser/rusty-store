@@ -1,6 +1,9 @@
 use std::fmt;
 
-use crate::{inventory::{Inventory, Product}, util};
+use crate::{
+    inventory::{Inventory, Product},
+    util,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TransactionType {
@@ -114,6 +117,22 @@ impl TransactionManager {
     fn list_transactions(&self) -> &Vec<Transaction> {
         &self.transactions
     }
+
+    pub fn sales(&self) -> Vec<&Transaction> {
+        self
+            .transactions
+            .iter()
+            .filter(|transaction| transaction.transaction_type == TransactionType::Sale)
+            .collect()
+    }
+
+    pub fn purchases(&self) -> Vec<&Transaction> {
+        self
+            .transactions
+            .iter()
+            .filter(|transaction| transaction.transaction_type == TransactionType::Purchase)
+            .collect()
+    }
 }
 
 /// Handles Sales transactions.
@@ -123,7 +142,10 @@ impl TransactionManager {
 /// * transaction_manager - A mutable instance of `TransactionManager`
 /// * inventory - The Inventory list of products to sale from
 ///
-pub fn handle_sale_transaction(transaction_manager: &mut TransactionManager, inventory: &mut Inventory) {
+pub fn handle_sale_transaction(
+    transaction_manager: &mut TransactionManager,
+    inventory: &mut Inventory,
+) {
     println!("\n--- Record Sale ---");
 
     let product_name = util::get_user_input("Enter product name: ");
@@ -153,7 +175,10 @@ pub fn handle_sale_transaction(transaction_manager: &mut TransactionManager, inv
 /// * transaction_manager - A mutable instance of `TransactionManager`
 /// * inventory - The Inventory list of products to sale from
 ///
-pub fn handle_purchase_transaction(transaction_manager: &mut TransactionManager, inventory: &mut Inventory) {
+pub fn handle_purchase_transaction(
+    transaction_manager: &mut TransactionManager,
+    inventory: &mut Inventory,
+) {
     println!("\n--- Record Purchase ---");
 
     let product_name = util::get_user_input("Enter product name: ");
@@ -182,12 +207,40 @@ pub fn handle_purchase_transaction(transaction_manager: &mut TransactionManager,
 /// # Arguments
 ///
 /// * transaction_manager - An instance of `TransactionManager`
-/// 
+///
 pub fn list_transactions(transaction_manager: &TransactionManager) {
-    println!("\n--- Transaction List ---");
+    // Headers for the transaction table
+    let headers = vec![
+        "No",
+        "Type",
+        "Product",
+        "Quantity",
+        "Price per Unit",
+        "Total Amount",
+    ];
 
-    transaction_manager.list_transactions();
-    println!("\n--- End Transaction List ---")
+    // Collect all transactions (sales and purchases) into a single list
+    let transactions = transaction_manager.list_transactions();
+
+    let mut rows: Vec<Vec<String>> = Vec::new();
+    for (i, transaction) in transactions.iter().enumerate() {
+        let trans_type = match transaction.transaction_type {
+            TransactionType::Sale => "Sale",
+            TransactionType::Purchase => "Purchase",
+        };
+        let total_amount = transaction.price * transaction.quantity as f64;
+        rows.push(vec![
+            (i + 1).to_string(),
+            trans_type.to_string(),
+            transaction.product_name.clone(),
+            transaction.quantity.to_string(),
+            format!("${:.2}", transaction.price),
+            format!("${:.2}", total_amount),
+        ])
+    }
+
+    let formatted_table = util::format_table(headers, rows);
+    println!("{}", formatted_table);
 }
 
 #[cfg(test)]
