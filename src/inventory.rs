@@ -10,7 +10,7 @@ pub struct Product {
     pub quantity: u32,
 }
 
-pub trait InventoryManagement {
+trait InventoryManagement {
     fn add_product(&mut self, product: Product) -> Result<(), String>;
     fn edit_product(
         &mut self,
@@ -93,6 +93,7 @@ impl Inventory {
 
 /// Public function to add a product to the inventory
 pub fn add_product(inventory: &mut Inventory) {
+    println!("\n--- Product Details ---");
 
     let name = util::get_user_input("Enter product name: ");
     let description = util::get_user_input("Enter product description: ");
