@@ -39,7 +39,7 @@ impl AuthManager {
             .bind(hashed_password)
             .execute(&self.db)
             .await
-            .map_err(|_| "Failed to insert user")?;
+            .map_err(|e| format!("Failed to insert user: {}", e))?;
         Ok(())
     }
 
@@ -90,7 +90,11 @@ pub async fn register(auth_manager: &AuthManager) {
             login(auth_manager).await;
         }
         Err(e) => {
-            println!("Registration failed: {}", e);
+            if e.contains("UNIQUE constraint failed") {
+                println!("Error: Username already exists. Please choose a different username.");
+            } else {
+                println!("Registration failed: {}", e);
+            }
             std::process::exit(1);
         }
     }
