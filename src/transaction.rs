@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::inventory::{Inventory, Product};
+use crate::{inventory::{Inventory, Product}, util};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TransactionType {
@@ -45,7 +45,7 @@ impl TransactionManager {
         }
     }
 
-    pub fn record_sale(
+    fn record_sale(
         &mut self,
         inventory: &mut Inventory,
         product_name: &str,
@@ -75,7 +75,7 @@ impl TransactionManager {
         }
     }
 
-    pub fn record_purchase(
+    fn record_purchase(
         &mut self,
         inventory: &mut Inventory,
         product_name: &str,
@@ -111,12 +111,84 @@ impl TransactionManager {
         Ok(())
     }
 
-    pub fn list_transactions(&self) -> &Vec<Transaction> {
+    fn list_transactions(&self) -> &Vec<Transaction> {
         &self.transactions
     }
 }
 
+/// Handles Sales transactions.
+///
+/// # Arguments
+///
+/// * transaction_manager - A mutable instance of `TransactionManager`
+/// * inventory - The Inventory list of products to sale from
+///
+pub fn handle_sale_transaction(transaction_manager: &mut TransactionManager, inventory: &mut Inventory) {
+    println!("\n--- Record Sale ---");
 
+    let product_name = util::get_user_input("Enter product name: ");
+    let quantity = util::get_user_input("Enter quantity sold: ")
+        .parse::<u32>()
+        .unwrap_or_else(|_| {
+            println!("Invalid quantity. Defaulting to 0.");
+            0
+        });
+    let price = util::get_user_input("Enter sale price: ")
+        .parse::<f64>()
+        .unwrap_or_else(|_| {
+            println!("Invalid price. Defaulting to 0.0.");
+            0.0
+        });
+
+    match transaction_manager.record_sale(inventory, &product_name, quantity, price) {
+        Ok(_) => println!("Sale recorded successfully."),
+        Err(e) => println!("Error recording sale: {}", e),
+    }
+}
+
+/// Handles Purchase transactions.
+///
+/// # Arguments
+///
+/// * transaction_manager - A mutable instance of `TransactionManager`
+/// * inventory - The Inventory list of products to sale from
+///
+pub fn handle_purchase_transaction(transaction_manager: &mut TransactionManager, inventory: &mut Inventory) {
+    println!("\n--- Record Purchase ---");
+
+    let product_name = util::get_user_input("Enter product name: ");
+    let quantity = util::get_user_input("Enter quantity purchased: ")
+        .parse::<u32>()
+        .unwrap_or_else(|_| {
+            println!("Invalid quantity. Defaulting to 0.");
+            0
+        });
+
+    let price = util::get_user_input("Enter purchase price: ")
+        .parse::<f64>()
+        .unwrap_or_else(|_| {
+            println!("Invalid price. Defaulting to 0.0.");
+            0.0
+        });
+
+    match transaction_manager.record_purchase(inventory, &product_name, quantity, price) {
+        Ok(_) => println!("Purchase recorded successfully."),
+        Err(e) => println!("Error recording purchase: {}", e),
+    }
+}
+
+/// A public function that lists all the transactions.
+///
+/// # Arguments
+///
+/// * transaction_manager - An instance of `TransactionManager`
+/// 
+pub fn list_transactions(transaction_manager: &TransactionManager) {
+    println!("\n--- Transaction List ---");
+
+    transaction_manager.list_transactions();
+    println!("\n--- End Transaction List ---")
+}
 
 #[cfg(test)]
 mod tests {
@@ -140,7 +212,7 @@ mod tests {
         // Record a sale
         let result = transaction_manager.record_sale(&mut inventory, "Widget", 10, 55.0);
         assert!(result.is_ok());
-        assert_eq!(inventory.products.get("Widget").unwrap().quantity, 90); 
+        assert_eq!(inventory.products.get("Widget").unwrap().quantity, 90);
         assert_eq!(transaction_manager.transactions.len(), 1);
 
         let transaction = &transaction_manager.transactions[0];
@@ -157,20 +229,24 @@ mod tests {
         let mut transaction_manager = TransactionManager::new();
 
         // Add a product to the inventory
-        inventory
-            .products
-            .insert("Widget".to_string(), Product {
+        inventory.products.insert(
+            "Widget".to_string(),
+            Product {
                 name: "Widget".to_string(),
                 description: "A test widget".to_string(),
                 price: 50.0,
                 quantity: 5,
-            });
+            },
+        );
 
         // Attempt to sell more than available stock
         let result = transaction_manager.record_sale(&mut inventory, "Widget", 10, 55.0);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "Not enough stock to complete the sale.");
+        assert_eq!(
+            result.unwrap_err(),
+            "Not enough stock to complete the sale."
+        );
         assert_eq!(inventory.products.get("Widget").unwrap().quantity, 5); // Stock unchanged
         assert!(transaction_manager.transactions.is_empty());
     }
@@ -181,14 +257,15 @@ mod tests {
         let mut transaction_manager = TransactionManager::new();
 
         // Add a product to the inventory
-        inventory
-            .products
-            .insert("Widget".to_string(), Product {
+        inventory.products.insert(
+            "Widget".to_string(),
+            Product {
                 name: "Widget".to_string(),
                 description: "A test widget".to_string(),
                 price: 50.0,
                 quantity: 5,
-            });
+            },
+        );
 
         // Record a purchase
         let result = transaction_manager.record_purchase(&mut inventory, "Widget", 20, 45.0);
