@@ -1,5 +1,6 @@
 pub mod inventory;
 pub mod transaction;
+pub mod reporting;
 mod util;
 
 use inventory::Inventory;
@@ -34,7 +35,8 @@ pub fn execute(store: &mut Store, choice: &str) {
             &mut store.inventory,
         ),
         "7" => transaction::list_transactions(&store.transaction_manager),
-        "8" => {
+        "8" => reporting::generate_reports(&store.transaction_manager, &store.inventory),
+        "9" => {
             println!("--- Exiting Rusty Store ---");
             println!("Goodbye!");
             std::process::exit(0);
@@ -52,5 +54,6 @@ pub fn display_menu() {
     println!("5. Record Sale");
     println!("6. Record Purchase");
     println!("7. List Transactions");
-    println!("8. Exit");
+    println!("8. Generate Reports");
+    println!("9. Exit");
 }
