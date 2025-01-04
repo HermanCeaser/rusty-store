@@ -1,6 +1,7 @@
+pub mod auth;
 pub mod inventory;
-pub mod transaction;
 pub mod reporting;
+pub mod transaction;
 mod util;
 
 use inventory::Inventory;
@@ -14,8 +15,10 @@ pub struct Store {
 impl Store {
     pub fn new() -> Self {
         Store {
-            inventory: Inventory::load_from_file("db/inventory.json").unwrap_or_else(|_| Inventory::new()),
-            transaction_manager: TransactionManager::load_from_file("db/transactions.json").unwrap_or_else(|_| TransactionManager::new()),
+            inventory: Inventory::load_from_file("db/inventory.json")
+                .unwrap_or_else(|_| Inventory::new()),
+            transaction_manager: TransactionManager::load_from_file("db/transactions.json")
+                .unwrap_or_else(|_| TransactionManager::new()),
         }
     }
 
@@ -23,7 +26,10 @@ impl Store {
         if let Err(e) = self.inventory.save_to_file("db/inventory.json") {
             eprintln!("Failed to save inventory: {}", e);
         }
-        if let Err(e) = self.transaction_manager.save_to_file("db/transactions.json") {
+        if let Err(e) = self
+            .transaction_manager
+            .save_to_file("db/transactions.json")
+        {
             eprintln!("Failed to save transactions: {}", e);
         }
     }
